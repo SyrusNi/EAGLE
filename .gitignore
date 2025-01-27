@@ -159,7 +159,9 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-# links
+# links and logs and weights
 models
 experiments
 data
+test_eagle_vicuna-7b-v1.3
+wandb
