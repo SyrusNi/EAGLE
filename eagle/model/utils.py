@@ -263,12 +263,10 @@ def reset_past_key_values(passed_key_values: List[torch.Tensor]) -> List[torch.T
 
 
 def generate_candidates(tree_logits, tree_indices, retrieve_indices, sample_token, logits_processor):
+    
     sample_token = sample_token.to(tree_indices.device)
-
     candidates_logit = sample_token[0]
-
     candidates_tree_logits = tree_logits[0]
-
     candidates = torch.cat([candidates_logit, candidates_tree_logits.view(-1)], dim=-1)
 
     tree_candidates = candidates[tree_indices]
@@ -292,6 +290,7 @@ def generate_candidates(tree_logits, tree_indices, retrieve_indices, sample_toke
         cart_candidates_prob = None
     # Unsqueeze the tree candidates for dimension consistency.
     tree_candidates = tree_candidates.unsqueeze(0)
+    
     return cart_candidates, cart_candidates_prob, tree_candidates
 
 

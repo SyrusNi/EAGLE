@@ -590,6 +590,8 @@ class Model(nn.Module):
 
         #hidden_states=self.act(self.fc(torch.cat((inputs_embeds,hidden_states),dim=-1)))
         inputs_embeds=inputs_embeds.to(hidden_states.dtype)
+
+        # concate token embedding and hidden state of last token
         hidden_states = self.fc(torch.cat((inputs_embeds, hidden_states), dim=-1))
 
 
@@ -705,7 +707,19 @@ class Model(nn.Module):
     #
     #     return  sampled_indices,sampled_probs
 
-    def sample(self,logits, logits_processor,k=1, replacement=False):
+    def sample(self, logits, logits_processor, k=1, replacement=False):
+        '''sample from logits
+
+        Input:
+            - logits: Shape [1, v] or [q, v], q stands for node nums in one layer of the tree
+            - logits_processor: sth like top_k_top_p_filter
+            - k: # of samples
+
+        Returns:
+            - sampled_indices: Shape [q, k]
+            - sampled_probs: prob of sampled indices. Shape [q, k]
+            - probabilities: prob of all vocab after process. Shape [q, v]
+        '''
         logits = logits_processor(None, logits)
         probabilities = torch.nn.functional.softmax(logits, dim=1)
         sampled_indices = torch.multinomial(probabilities, k, replacement=False)
@@ -721,7 +735,7 @@ class Model(nn.Module):
 
         sampled_probs = torch.clamp(sampled_probs, min=0.0, max=1.0)
 
-        return sampled_indices, sampled_probs,probabilities
+        return sampled_indices, sampled_probs, probabilities
 
         # if replacement:
         #     sampled_indices = torch.multinomial(probabilities, k, replacement=True)
@@ -759,42 +773,54 @@ class Model(nn.Module):
         #     return sampled_indices, sampled_probs
 
     @torch.no_grad()
-    def topK_genrate(self, hidden_states, input_ids, head, logits_processor,max_length=4, use_cache=True):
+    def topK_genrate(self, hidden_states, input_ids, head, logits_processor, max_length=4, use_cache=True):
+        '''Generate tree tokens with drafter
+
+        Inputs:
+            - hidden_state: Shape [b, s, h]
+            - input_ids: Shape [b, s]
+            - head: head to convert hidden_state into logits, usually the lm_head of the target model
+            - logits_processor: sth like top_k_top_p_filter
+        
+        Returns:
+            A tuple containing three elements:
+            - sampled indices of tree tokens arranged in a line. Shape [t, k]. t: tree node nums, k: # of sampling
+            - prob of those sampled indices. Shape [t, k]
+            - prob of all vocab. Shape [t, v]
+        '''
         # test_=input_ids
         # input_ids = torch.tensor([state[1:]])
         input_ids = input_ids[:, 1:]
         input_ids = input_ids.to(hidden_states.device)
-        ss_token,ss_prob,ss_op = [],[],[]
-        len_posi=input_ids.shape[1]
+        ss_token, ss_prob, ss_op = [], [], []
+        len_posi = input_ids.shape[1]
         self.reset()
         if use_cache:
-
-
+            # forward
             if hasattr(self, "stable_kv") and self.stable_kv is not None:
                 kv_len=self.stable_kv[0][0].shape[2]
-                out_hidden, past_key_values = self(hidden_states, input_ids=input_ids[:,kv_len:], past_key_values=self.stable_kv,use_cache=True)
+                out_hidden, past_key_values = self(hidden_states, input_ids=input_ids[:,kv_len:], past_key_values=self.stable_kv, use_cache=True)
             else:
                 out_hidden, past_key_values = self(hidden_states, input_ids=input_ids, use_cache=True)
             self.stable_kv=past_key_values
             last_hidden = out_hidden[:, -1]
+
             if not self.diff_device:
                 last_headout = head(last_hidden)
             else:
                 if hasattr(self, "layer_device"):
                     last_headout = head(last_hidden)
-                    last_headout=last_headout.to(self.layer_device)
+                    last_headout = last_headout.to(self.layer_device)
                 else:
-                    last_headout=F.linear(last_hidden,self.headweight)
-
-
+                    last_headout = F.linear(last_hidden, self.headweight)
 
             for i in range(len(self.tree_buffer['tree_indices'])):
                 if logits_processor is not None:
-                    topk_index,topk_prob,op=self.sample(last_headout,logits_processor,k=top_k,)
+                    topk_index, topk_prob, op = self.sample(last_headout, logits_processor, k=top_k,)
                 else:
-                    top=torch.topk(last_headout, top_k, dim=-1)
+                    top = torch.topk(last_headout, top_k, dim=-1)
                     topk_index,topk_prob = top.indices,top.values
-                    op=None
+                    op = None
 
                 ss_token.append(topk_index)
                 ss_prob.append(topk_prob)
@@ -812,6 +838,7 @@ class Model(nn.Module):
                 #hidden_states = hidden_states.repeat(1,len_sq,1)
                 self.tree_mask=self.tree_buffer['attn_mask'][i]
                 position_ids=len_posi+self.tree_buffer["position_ids"][i]
+                # forward
                 out_hidden, past_key_values = self(hidden_states, input_ids=input_ids, past_key_values=past_key_values,
                                                    position_ids=position_ids,use_cache=True)
                 len_posi += 1
@@ -829,11 +856,11 @@ class Model(nn.Module):
                 #print(select_index)
 
             if logits_processor is not None:
-                topk_index,topk_prob,op=self.sample(last_headout,logits_processor,k=top_k,)
+                topk_index, topk_prob, op = self.sample(last_headout, logits_processor, k=top_k,)
             else:
                 top = torch.topk(last_headout, top_k, dim=-1)
                 topk_index, topk_prob = top.indices, top.values
-                op=None
+                op = None
             ss_token.append(topk_index)
             ss_prob.append(topk_prob)
             ss_op.append(op)
@@ -843,9 +870,7 @@ class Model(nn.Module):
             pass
 
         return (torch.cat(ss_token),torch.cat(ss_prob),ss_op)
-
-
-
+    
 
     @torch.no_grad()
     def acc(self,data,head,max_length=5):
