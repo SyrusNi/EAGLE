@@ -75,6 +75,8 @@ def ea_forward(input_ids, model, tokenizer, tree_choices, logits_processor=None,
         outputs = model.base_model(input_id, use_cache=True, past_key_values=past_key_values)
         input_ids = torch.cat([input_ids, input_id], dim=-1)
 
+        new_token += 1
+        
         if tokenizer.eos_token_id in input_ids[0, input_len:].tolist():
             break
         if new_token > 1024:
@@ -423,7 +425,7 @@ if __name__ == "__main__":
     if args.answer_file:
         answer_file = args.answer_file
     else:
-        answer_file = f"{args.bench_name}/{args.model_id}.jsonl"
+        answer_file = f"{parent_dir}/data/{args.bench_name}/model_answer/{args.model_id}.jsonl"
 
     print(f"Output to {answer_file}")
 
