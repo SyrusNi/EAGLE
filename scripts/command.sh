@@ -7,3 +7,14 @@ accelerate launch -m --mixed_precision=bf16 eagle.train.main \
     --configpath eagle/train/vicuna_7B_config.json
 
 python -m eagle.ge_data.allocation --outdir data/eagle-generated-data
+
+# evaluation
+python -m eagle.evaluation.gen_ea_answer_vicuna \
+    --model-id eagle_vicuna-7b-v1.3 \
+    --ea-model-path models/EAGLE-Vicuna-7B-v1.3 \
+    --base-model-path models/vicuna-7b-v1.3
+
+python -m eagle.evaluation.gen_baseline_answer_vicuna \
+    --model-id baseline_vicuna-7b-v1.3 \
+	--ea-model-path models/EAGLE-Vicuna-7B-v1.3 \
+    --base-model-path models/vicuna-7b-v1.3\
