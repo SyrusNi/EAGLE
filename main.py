@@ -317,7 +317,7 @@ def main(base_model_path, EAGLE_model_path):
 if __name__ == '__main__':
     base_model_path = 'models/vicuna-7b-v1.3'
     EAGLE_model_path = 'models/EAGLE-Vicuna-7B-v1.3'
-    #EAGLE_model_path = 'test_eagle_vicuna-7b-v1.3'
+    EAGLE_model_path = 'test_eagle_vicuna-7b-v1.3'
     main(base_model_path, EAGLE_model_path)
 
 

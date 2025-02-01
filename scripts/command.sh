@@ -11,6 +11,7 @@ accelerate launch -m --num_processes=4 --mixed_precision=bf16 eagle.train.main \
 python -m eagle.ge_data.allocation --outdir data/eagle-generated-data
 
 # evaluation
+# eagle-1
 python -m eagle.evaluation.gen_ea_answer_vicuna \
     --model-id eagle_vicuna-7b-v1.3 \
     --ea-model-path models/EAGLE-Vicuna-7B-v1.3 \
@@ -21,7 +22,7 @@ python -m eagle.evaluation.gen_ea_answer_vicuna \
     --ea-model-path models/EAGLE-Vicuna-7B-v1.3 \
     --base-model-path models/vicuna-7b-v1.3 \
     --temperature 0
-
+# baseline
 python -m eagle.evaluation.gen_baseline_answer_vicuna \
     --model-id baseline_vicuna-7b-v1.3 \
     --ea-model-path models/EAGLE-Vicuna-7B-v1.3 \
@@ -32,8 +33,20 @@ python -m eagle.evaluation.gen_baseline_answer_vicuna \
     --ea-model-path models/EAGLE-Vicuna-7B-v1.3 \
     --base-model-path models/vicuna-7b-v1.3 \
     --temperature 0
-
+# eagle-2
 python -m eagle.evaluation.gen_ea_answer_vicuna \
     --model-id eagle_train_vicuna-7b-v1.3 \
     --ea-model-path test_eagle_vicuna-7b-v1.3 \
     --base-model-path models/vicuna-7b-v1.3
+
+python -m eagle.evaluation.gen_ea_answer_vicuna \
+    --model-id eagle-2_vicuna-7b-v1.3 \
+    --ea-model-path models/EAGLE-Vicuna-7B-v1.3 \
+    --base-model-path models/vicuna-7b-v1.3 \
+    --temperature 0
+
+python -m eagle.evaluation.gen_ea_answer_vicuna \
+    --model-id eagle-2_vicuna-7b-v1.3 \
+    --ea-model-path models/EAGLE-Vicuna-7B-v1.3 \
+    --base-model-path models/vicuna-7b-v1.3 \
+    --temperature 1.0

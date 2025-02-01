@@ -405,7 +405,7 @@ for epoch in range(num_epochs + 1):
         print('Train Accuracy: {:.2f}%'.format(100 * correct / total))
         wandb.log({"train/epochacc": correct / total, "train/epochloss": epoch_loss})
 
-    if (epoch + 1) % train_config["save_freq"]:
+    if (epoch + 1) % train_config["save_freq"] == 0:
         top_3acc = [0 for _ in range(3)]
         correct = 0
         total = 0
@@ -466,4 +466,8 @@ for epoch in range(num_epochs + 1):
             print('Test Epoch [{}/{}], Loss: {:.4f}'.format(epoch + 1, num_epochs, epoch_loss))
             print('Test Accuracy: {:.2f}%'.format(100 * correct / total))
             wandb.log({"test/epochacc": correct / total, "test/epochloss": epoch_loss})
-            accelerator.save_state(output_dir=f"{args.cpdir}/state_{epoch}")
+            accelerator.save_state(output_dir=f"{args.cpdir}/state_{epoch+1}")
+
+if accelerator.is_local_main_process:
+    print('training done')
+    accelerator.save_state(output_dir=f"{args.cpdir}/last_run")
