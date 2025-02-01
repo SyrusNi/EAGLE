@@ -7,6 +7,7 @@ parser.add_argument('--end', type=int, default=100)
 parser.add_argument('--index', type=int, default=1)
 parser.add_argument('--gpu_index', type=int, nargs='+', default=[0])
 parser.add_argument('--outdir', type=str, default='outdir0')
+parser.add_argument('--model_path', type=str, default='models/vicuna-7b-v1.3')
 args = parser.parse_args()
 import os
 
@@ -19,12 +20,7 @@ from datasets import load_dataset
 import json
 from fastchat.model.model_adapter import get_conversation_template
 
-bigname="vicunav13/13B"
-bigname = 'models/vicuna-7b-v1.3'
-# bigname = "/home/lyh/weights/hf/llama/7B/"
-# smallname = "/home/lyh/weights/hf/llama/7B/"
-
-
+bigname = args.model_path
 
 def longest_common_prefix(list1, list2):
     prefix_length = 0
@@ -38,7 +34,6 @@ def longest_common_prefix(list1, list2):
 
     common_prefix = list1[:prefix_length]
     return common_prefix, prefix_length
-
 
 def build_dataset_rank(
         tokenizer, split="train",
@@ -120,8 +115,6 @@ def build_dataset_rank(
 
             loss_mask[cur_len:] = 0
 
-
-
             new_examples["conversation"].append(conversation)
             new_examples["input_ids"].append(input_ids[None,:])
             new_examples["loss_mask"].append(loss_mask[None,:])
@@ -151,16 +144,6 @@ print(ds)
 bigmodel = AutoModelForCausalLM.from_pretrained(bigname,  device_map="auto",torch_dtype=torch.float16)
 bigmodel.eval()
 
-
-
-
-
-
-
-
-
-
-
 @torch.no_grad()
 def ge(data):
     input_ids=data["input_ids"]
@@ -182,7 +165,6 @@ def writedata(name,data_point):
     current_length=len(os.listdir(name))
     idx=current_length
     torch.save(data_point, f'{name}/data_{idx}.ckpt')
-
 
 for data in ds:
     outdata = ge(data)

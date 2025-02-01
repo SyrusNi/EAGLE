@@ -6,7 +6,8 @@ accelerate launch -m --num_processes=4 --mixed_precision=bf16 eagle.train.main \
     --cpdir test_eagle_vicuna-7b-v1.3 \
     --configpath eagle/train/vicuna_7B_config.json \
     --bs 8 \
-    --gradient-accumulation-steps 4
+    --gradient-accumulation-steps 4 \
+    --ckptdir test_eagle_vicuna-7b-v1.3/state_1
 
 python -m eagle.ge_data.allocation --outdir data/eagle-generated-data
 
