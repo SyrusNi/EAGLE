@@ -74,7 +74,4 @@ def beam_search(model, input_ids, attention_mask, depth, beam_nums):
 
 tokens = tokenizer(['Hello', 'quantum computation'], return_tensors='pt', padding=True).to(model.device)
 generate_ids = beam_search(model, tokens.input_ids, tokens.attention_mask, 5, 2)
-# shape: [b, s+]
-# 注意和 model(**tokens) 作区分
-# 一定要设置 max_new_tokens，否则默认填充到最长，比如 4096，非常耗时间
-tokenizer.batch_decode(generate_ids, skip_special_tokens=True) # 返回一个 list
+tokenizer.batch_decode(generate_ids, skip_special_tokens=True)

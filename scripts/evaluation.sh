@@ -13,13 +13,13 @@
 mkdir ./experiments/$SLURM_JOB_ID
 
 python -m eagle.evaluation.gen_ea_answer_vicuna \
-    --model-id eagle-2_vicuna-7b-v1.3 \
+    --model-id eagle_vicuna-7b-v1.3 \
     --ea-model-path models/EAGLE-Vicuna-7B-v1.3 \
     --base-model-path models/vicuna-7b-v1.3 \
     --temperature 0
 
-python -m eagle.evaluation.gen_ea_answer_vicuna \
-    --model-id eagle-2_vicuna-7b-v1.3 \
+python -m eagle.evaluation.gen_baseline_answer_vicuna \
+    --model-id baseline_vicuna-7b-v1.3 \
     --ea-model-path models/EAGLE-Vicuna-7B-v1.3 \
-    --base-model-path models/vicuna-7b-v1.3 \
-    --temperature 1.0
+    --base-model-path models/vicuna-7b-v1.3\
+    --temperature 0
