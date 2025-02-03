@@ -5,10 +5,10 @@ from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, PreTra
 
 Tiny_llama_1B = 'models/vicuna-7b-v1.3'
 
-tokenizer = AutoTokenizer.from_pretrained(Tiny_llama_1B, padding_side = 'left') # 默认填充方向是右侧，在推理场景下不好用
+tokenizer = AutoTokenizer.from_pretrained(Tiny_llama_1B, padding_side = 'left')
 if tokenizer.pad_token is None:
-    tokenizer.pad_token = tokenizer.eos_token # Most LLMs don't have a pad token by default
-model = AutoModelForCausalLM.from_pretrained(Tiny_llama_1B, device_map='cuda:0', torch_dtype=torch.float32) # 正常情况一张卡是放不下的
+    tokenizer.pad_token = tokenizer.eos_token
+model = AutoModelForCausalLM.from_pretrained(Tiny_llama_1B, device_map='cuda:0', torch_dtype=torch.float32)
 
 from typing import List, Optional, Tuple, Union
 
