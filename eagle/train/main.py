@@ -7,8 +7,9 @@ parser.add_argument('--lr', type=float, default=3e-5)
 parser.add_argument('--bs', type=int, default=4)
 parser.add_argument('--gradient-accumulation-steps', type=int, default=1)
 parser.add_argument('--tmpdir', type=str, default='0')
-parser.add_argument('--outdir', type=str, default='0')
-parser.add_argument('--cpdir', type=str, default='0')
+#parser.add_argument('--outdir', type=str, default='0')
+parser.add_argument('--cpdir', type=str, default='0', help='output dir')
+parser.add_argument('--ckptdir', type=str, help='resume from checkpoint')
 args = parser.parse_args()
 
 train_config = {
@@ -68,7 +69,7 @@ from transformers import get_linear_schedule_with_warmup, AutoConfig
 if accelerator.is_main_process:
     import wandb
 
-    wandb.init(project="ess", entity="yuhui-li", config=train_config)
+    wandb.init(project="EAGLE", entity="nishengding-fudan-university", config=train_config)
 
 baseconfig = AutoConfig.from_pretrained(args.basepath)
 
@@ -341,6 +342,10 @@ else:
         model, head, optimizer, train_loader, test_loader
     )
 # accelerator.load_state("checkpoints/state_5")
+if args.ckptdir:
+    accelerator.load_state(args.ckptdir)
+    print(f'load from checkpoint: {args.ckptdir}')
+
 for epoch in range(num_epochs + 1):
     top_3acc = [0 for _ in range(3)]
     correct = 0
@@ -412,7 +417,7 @@ for epoch in range(num_epochs + 1):
         print('Train Accuracy: {:.2f}%'.format(100 * correct / total))
         wandb.log({"train/epochacc": correct / total, "train/epochloss": epoch_loss})
 
-    if (epoch + 1) % train_config["save_freq"]:
+    if (epoch + 1) % train_config["save_freq"] == 0:
         top_3acc = [0 for _ in range(3)]
         correct = 0
         total = 0
@@ -481,4 +486,8 @@ for epoch in range(num_epochs + 1):
             # accelerator.save_model(model, f"checkpoints/model_{epoch}")
             # accelerator.save_state(output_dir=f"{args.outdir}/state_{epoch}")
             # os.system(f"cp -r {args.outdir} {args.cpdir}")
-            accelerator.save_state(output_dir=f"{args.cpdir}/state_{epoch}")
+            accelerator.save_state(output_dir=f"{args.cpdir}/state_{epoch+1}")
+
+if accelerator.is_local_main_process:
+    print('training done')
+    accelerator.save_state(output_dir=f"{args.cpdir}/last_run")
